@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from p01b_logreg import main as p01b
 from p01e_gda import main as p01e
-# from p02cde_posonly import main as p02
+from p02cde_posonly import main as p02
 from p03d_poisson import main as p03
 from p05b_lwr import main as p05b
 from p05c_tau import main as p05c
@@ -31,15 +31,12 @@ if args.p_num == 0 or args.p_num == 1:
          eval_path='data/ds2_valid.csv',
          pred_path='output/p01e_pred_2.txt')
 
-'''
 # Problem 2
 if args.p_num == 0 or args.p_num == 2:
     p02(train_path='data/ds3_train.csv',
         valid_path='data/ds3_valid.csv',
         test_path='data/ds3_test.csv',
         pred_path='output/p02X_pred.txt')
-
-'''
 
 # Problem 3
 if args.p_num == 0 or args.p_num == 3:

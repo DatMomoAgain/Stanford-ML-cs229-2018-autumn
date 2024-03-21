@@ -115,27 +115,39 @@ def fit_naive_bayes_model(matrix, labels):
     # *** START CODE HERE ***
     m, n = matrix.shape
     phi_y = np.sum(labels) / m
-    
-    phi_j1_num = np.zeros(n)
+
+    #list of dictionary, with key k being occurences of word j in message, and value being list. phi_jk[j][k]
+    phi_jk1 = [{} for _ in range(n)]
     den1 = 0
+
+    phi_jk0 = [{} for _ in range(n)]
     den0 = 0
-    phi_j0_num = np.zeros(n)
 
     for i in range(m):
+        tot_words = 0
         for j in range(n):
-            if(labels[i] and matrix[i][j] > 0):
-                phi_j1_num[j] += 1
-            if((not labels[i]) and matrix[i][j] > 0):
-                phi_j0_num[j] += 1
-        if(labels[i]):
-            den1 += np.sum(matrix[i])
-        else:
-            den0 += np.sum(matrix[i])
+            tot_words += matrix[i][j]
+        
+        for j in range(n):
+            for k in range(int(np.sqrt(tot_words))):
+                if(labels[i] and matrix[i][j] == k):
+                    if k in phi_jk1[j]:
+                        phi_jk1[j][k] += 1
+                    else:
+                        phi_jk1[j][k] = 1
+                elif(labels[i] == 0 and matrix[i][j] == k):
+                    if k in phi_jk0[j]:
+                        phi_jk0[j][k] += 1
+                    else:
+                        phi_jk0[j][k] = 1
 
-    phi_j1 = (phi_j1_num + 1) / (den1 + n*8)
-    phi_j0 = (phi_j0_num + 1) / (den0 + n*8)
+            if(labels[i]):
+                den1 += 1
+            else:
+                den0 += 1
 
-    return phi_j0, phi_j1, phi_y
+    return phi_y, phi_jk0, phi_jk1, den0, den1
+                    
     # *** END CODE HERE ***
 
 
@@ -152,22 +164,37 @@ def predict_from_naive_bayes_model(model, matrix):
     Returns: A numpy array containg the predictions from the model
     """
     # *** START CODE HERE ***
-    phi_j0, phi_j1, phi_y = model
+    phi_y, phi_jk0, phi_jk1, den0, den1 = model
 
     m, n = matrix.shape
 
     y = np.zeros(m)
 
     for i in range(m):
+        tot = 0
+        tot_words = 0
         for j in range(n):
-            if(matrix[i][j] > 0):
-                y[i] += np.log(phi_j1[j]) - np.log(phi_j0[j])
+            tot_words += matrix[i][j]
+
+        for j in range(n):
+            for k in range(int(np.sqrt(tot_words))):
+                if(matrix[i][j] != k):
+                    continue
+                
+                if k in phi_jk1[j]:
+                    num = (phi_jk1[j][k] + 1) / (den1 + tot_words)
+                else:
+                    num = 1 / (den1 + tot_words)
+
+                if k in phi_jk0[j]:
+                    den = (phi_jk0[j][k] + 1) / (den0 + tot_words)
+                else:
+                    den = 1 / (den0 + tot_words)
+
+                tot += np.log(num/den)
         
-        y[i] +=  np.log(phi_y) - np.log(1 - phi_y)
-        if(y[i] > 0):
+        if (tot + np.log(phi_y / (1 - phi_y))) >= 0:
             y[i] = 1
-        else:
-            y[i] = 0
 
     return y
             
@@ -188,15 +215,32 @@ def get_top_five_naive_bayes_words(model, dictionary):
     Returns: The top five most indicative words in sorted order with the most indicative first
     """
     # *** START CODE HERE ***
-    phi_j0, phi_j1, phi_y = model
+    phi_y, phi_jk0, phi_jk1, den0, den1 = model
+    
+    n = len(phi_jk1)
 
-    log_prob = np.log(phi_j1) - np.log(phi_j0)
-    indexes = np.argsort(-log_prob)[:5]
+    phi_j0 = np.zeros(n)
+    phi_j1 = np.zeros(n)
+
+    for j in range(n):
+        for k in phi_jk1[j]:
+            phi_j1[j] += phi_jk1[j][k] / den1
+        for k in phi_jk0[j]:
+            phi_j0[j] += phi_jk0[j][k] / den0
+
+        print(f"{phi_j0[j]}   {phi_j1[j]}")
+
+    # fin_arr = np.log(phi_j1 / phi_j0)
+
+    # for i in range(len((fin_arr))):
+    #     print(fin_arr[i])
+
+    top5_index = np.argsort(-fin_arr)[:5]
 
     top5_words = []
 
     for key, value in dictionary.items():
-        if value in indexes:
+        if value in top5_index:
             top5_words.append(key)
 
     return top5_words
@@ -221,20 +265,6 @@ def compute_best_svm_radius(train_matrix, train_labels, val_matrix, val_labels, 
         The best radius which maximizes SVM accuracy.
     """
     # *** START CODE HERE ***
-
-    max_acc = 0
-    best_rad = 0
-
-    for i in radius_to_consider:
-        y = svm.train_and_predict_svm(train_matrix, train_labels, val_matrix, i)
-        accuracy = np.mean(y == val_labels)
-
-        if(accuracy > max_acc):
-            max_acc = accuracy
-            best_rad = i
-
-    return best_rad
-
     # *** END CODE HERE ***
 
 

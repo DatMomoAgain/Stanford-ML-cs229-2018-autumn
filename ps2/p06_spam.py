@@ -125,15 +125,13 @@ def fit_naive_bayes_model(matrix, labels):
         for j in range(n):
             if(labels[i] and matrix[i][j] > 0):
                 phi_j1_num[j] += 1
+                den1 += 1
             if((not labels[i]) and matrix[i][j] > 0):
                 phi_j0_num[j] += 1
-        if(labels[i]):
-            den1 += np.sum(matrix[i])
-        else:
-            den0 += np.sum(matrix[i])
+                den0 += 1
 
-    phi_j1 = (phi_j1_num + 1) / (den1 + n*8)
-    phi_j0 = (phi_j0_num + 1) / (den0 + n*8)
+    phi_j1 = (phi_j1_num + 1) / (den1 + 10000)
+    phi_j0 = (phi_j0_num + 1) / (den0 + 10000)
 
     return phi_j0, phi_j1, phi_y
     # *** END CODE HERE ***
